@@ -1,7 +1,27 @@
-"""Client for interacting with the PubMed E-utilities API."""
+"""PubMed API client for fetching articles."""
+
+import logging
+import time
+from typing import List, Dict, Optional, Any, Set, Tuple
+from datetime import datetime
+import xml.etree.ElementTree as ET
+import urllib.request
+import urllib.parse
+import urllib.error
+import json
+
+from pms.api.rate_limiter import RateLimiter
+from pms.models import Article, Author
+from pms.config import config
+
+logger = logging.getLogger(__name__)
+
+
+class PubMedClient:
+    """Client for interacting with the PubMed E-utilities API."""
 
     BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-    
+
     def __init__(self) -> None:
         """Initialize the PubMed client with configuration."""
         self.email = config.get("api", "email")
@@ -9,15 +29,15 @@
         self.api_key = config.get("api", "api_key")
         self.max_retries = config.get("api", "max_retries") or 3
         self.retry_delay = config.get("api", "retry_delay") or 5
-        
+
         # Set up rate limiter
         requests_per_second = config.get("api", "requests_per_second") or 3
         if self.api_key:
             # With API key, we can make more requests
             requests_per_second = 10
-            
+
         self.rate_limiter = RateLimiter(requests_per_second)
-        
+
         if not self.email:
             logger.warning(
                 "No email configured for PubMed API. "
@@ -38,10 +58,10 @@
         # Add common parameters
         params["tool"] = self.tool
         params["email"] = self.email
-        
+
         if self.api_key:
             params["api_key"] = self.api_key
-            
+
         # Build the URL
         url = f"{self.BASE_URL}/{endpoint}.fcgi?{urllib.parse.urlencode(params)}"
         return url
@@ -60,14 +80,14 @@
             try:
                 # Apply rate limiting
                 self.rate_limiter.wait()
-                
+
                 logger.debug(f"Making request to {url}")
                 with urllib.request.urlopen(url) as response:
                     content = response.read().decode("utf-8")
                     return content
             except urllib.error.HTTPError as e:
                 if e.code == 429:  # Too Many Requests
-                    wait_time = self.retry_delay * (2 ** retries)
+                    wait_time = self.retry_delay * (2**retries)
                     logger.warning(f"Rate limit exceeded, waiting {wait_time}s")
                     time.sleep(wait_time)
                     retries += 1
@@ -77,15 +97,11 @@
             except Exception as e:
                 logger.error(f"Request error: {str(e)}")
                 break
-                
+
         return None
 
     def search(
-        self, 
-        query: str, 
-        max_results: int = 100, 
-        date_range: Optional[Tuple[str, str]] = None,
-        retmode: str = "json"
+        self, query: str, max_results: int = 100, date_range: Optional[Tuple[str, str]] = None, retmode: str = "json"
     ) -> List[str]:
         """Search PubMed for articles matching the query.
 
@@ -105,21 +121,21 @@
             "usehistory": "y",
             "retmode": retmode,
         }
-        
+
         # Add date range if provided
         if date_range:
             start_date, end_date = date_range
             params["datetype"] = "pdat"  # Publication date
             params["mindate"] = start_date
             params["maxdate"] = end_date
-        
+
         url = self._build_request_url("esearch", params)
         content = self._make_request(url)
-        
+
         if not content:
             logger.error("Failed to search PubMed")
             return []
-        
+
         try:
             if retmode == "json":
                 # Parse JSON response
@@ -149,16 +165,16 @@
         """
         if not pmids:
             return []
-            
+
         articles = []
         # Process in batches to avoid large requests
         for i in range(0, len(pmids), batch_size):
-            batch_pmids = pmids[i:i + batch_size]
+            batch_pmids = pmids[i : i + batch_size]
             batch_articles = self._fetch_batch(batch_pmids)
             articles.extend(batch_articles)
-            
+
             logger.info(f"Fetched {len(batch_articles)} articles (batch {i//batch_size + 1})")
-            
+
         return articles
 
     def _fetch_batch(self, pmids: List[str]) -> List[Article]:
@@ -176,14 +192,14 @@
             "retmode": "xml",
             "rettype": "abstract",
         }
-        
+
         url = self._build_request_url("efetch", params)
         content = self._make_request(url)
-        
+
         if not content:
             logger.error("Failed to fetch articles")
             return []
-        
+
         try:
             return self._parse_articles_xml(content)
         except Exception as e:
@@ -201,7 +217,7 @@
         """
         root = ET.fromstring(xml_content)
         articles = []
-        
+
         # Find all PubmedArticle elements
         for pubmed_article in root.findall(".//PubmedArticle"):
             try:
@@ -210,20 +226,20 @@
                 if pmid_elem is None or not pmid_elem.text:
                     continue
                 pmid = pmid_elem.text
-                
+
                 # Extract article data
                 article_elem = pubmed_article.find(".//Article")
                 if article_elem is None:
                     continue
-                
+
                 # Extract title
                 title_elem = article_elem.find("ArticleTitle")
                 title = title_elem.text if title_elem is not None and title_elem.text else ""
-                
+
                 # Extract abstract
                 abstract_elem = article_elem.find(".//AbstractText")
                 abstract = abstract_elem.text if abstract_elem is not None and abstract_elem.text else ""
-                
+
                 # Handle multiple abstract sections
                 abstract_sections = article_elem.findall(".//Abstract/AbstractText")
                 if len(abstract_sections) > 1:
@@ -236,7 +252,7 @@
                         else:
                             abstract_parts.append(text)
                     abstract = " ".join(abstract_parts)
-                
+
                 # Extract authors
                 authors = []
                 author_list = article_elem.find(".//AuthorList")
@@ -245,22 +261,22 @@
                         last_name_elem = author_elem.find("LastName")
                         fore_name_elem = author_elem.find("ForeName")
                         initials_elem = author_elem.find("Initials")
-                        
+
                         if last_name_elem is not None and last_name_elem.text:
                             # Extract affiliations
                             affiliations = []
                             for affiliation in author_elem.findall(".//Affiliation"):
                                 if affiliation.text:
                                     affiliations.append(affiliation.text)
-                            
+
                             author = Author(
                                 last_name=last_name_elem.text,
                                 fore_name=fore_name_elem.text if fore_name_elem is not None else None,
                                 initials=initials_elem.text if initials_elem is not None else None,
-                                affiliations=affiliations
+                                affiliations=affiliations,
                             )
                             authors.append(author)
-                
+
                 # Extract publication date
                 pub_date = None
                 pub_date_elem = pubmed_article.find(".//PubDate")
@@ -268,11 +284,11 @@
                     year_elem = pub_date_elem.find("Year")
                     month_elem = pub_date_elem.find("Month")
                     day_elem = pub_date_elem.find("Day")
-                    
+
                     year = year_elem.text if year_elem is not None and year_elem.text else None
                     month = month_elem.text if month_elem is not None and month_elem.text else "1"
                     day = day_elem.text if day_elem is not None and day_elem.text else "1"
-                    
+
                     if year:
                         # Convert month name to number if needed
                         try:
@@ -281,13 +297,13 @@
                                 month = str(datetime_obj.month)
                         except ValueError:
                             month = "1"
-                        
+
                         try:
                             pub_date_str = f"{year}-{month}-{day}"
                             pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
                         except ValueError:
                             logger.warning(f"Invalid publication date for article {pmid}: {year}-{month}-{day}")
-                
+
                 # Extract DOI
                 doi = None
                 article_id_list = pubmed_article.find(".//ArticleIdList")
@@ -296,13 +312,13 @@
                         if id_elem.get("IdType") == "doi" and id_elem.text:
                             doi = id_elem.text
                             break
-                
+
                 # Extract journal
                 journal = None
                 journal_elem = article_elem.find(".//Journal/Title")
                 if journal_elem is not None and journal_elem.text:
                     journal = journal_elem.text
-                
+
                 # Extract keywords
                 keywords = []
                 keyword_list = pubmed_article.find(".//KeywordList")
@@ -310,7 +326,7 @@
                     for keyword_elem in keyword_list.findall("Keyword"):
                         if keyword_elem.text:
                             keywords.append(keyword_elem.text)
-                
+
                 # Create Article object
                 article = Article(
                     pmid=pmid,
@@ -320,12 +336,12 @@
                     keywords=keywords,
                     publication_date=pub_date,
                     doi=doi,
-                    journal=journal
+                    journal=journal,
                 )
-                
+
                 articles.append(article)
             except Exception as e:
                 logger.error(f"Error parsing article: {str(e)}")
                 continue
-        
+
         return articles
