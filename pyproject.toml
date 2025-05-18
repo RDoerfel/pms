@@ -1,3 +1,4 @@
+
 [tool.poetry]
 name = "pms"
 version = "0.1.0"
@@ -8,6 +9,7 @@ packages = [{include = "pms"}]
 
 [tool.poetry.dependencies]
 python = "^3.13"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -15,6 +17,10 @@ pytest-cov = "^4.1.0"
 black = "^23.7.0"
 mypy = "^1.5.0"
 flake8 = "^6.1.0"
+
+[tool.poetry.scripts]
+pms = "pms.cli:main"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
