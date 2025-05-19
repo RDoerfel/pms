@@ -56,7 +56,7 @@ class ProjectManager:
         logger.info(f"Created project {project_id}: {name}")
 
         # Initialize the project config file
-        self.update_project_config(project_id=project_id, mesh_terms=[], date_range={"start": "", "end": ""})
+        self.update_project_config(project_id=project_id, date_range={"start": "", "end": ""})
 
         return project_id
 
@@ -199,7 +199,6 @@ class ProjectManager:
         # After search is complete, update the project config
         self.update_project_config(
             project_id=project_id,
-            mesh_terms=mesh_terms if mesh_terms else None,
             date_range=config_date_range,
             query=query,
         )
