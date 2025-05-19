@@ -219,6 +219,45 @@ def export(args: argparse.Namespace) -> int:
         return 1
 
 
+def remove(args: argparse.Namespace) -> int:
+    """Remove a project.
+
+    Args:
+        args: Command-line arguments
+
+    Returns:
+        Exit code
+    """
+    setup_logging(args.log_level)
+
+    try:
+        if not args.force:
+            # Ask for confirmation
+            project_id = args.project_id
+            confirm = input(f"Are you sure you want to remove project {project_id}? This cannot be undone. (y/N): ")
+            if confirm.lower() != "y":
+                print("Operation cancelled.")
+                return 0
+
+        with ProjectManager() as manager:
+            # Check if project exists
+            project = manager.get_project(args.project_id)
+            if not project:
+                print(f"Project not found: {args.project_id}")
+                return 1
+
+            success = manager.remove_project(args.project_id)
+            if success:
+                print(f"Project '{project[1]}' ({args.project_id}) has been removed.")
+            else:
+                print(f"Failed to remove project {args.project_id}.")
+                return 1
+        return 0
+    except Exception as e:
+        logger.error(f"Failed to remove project: {str(e)}")
+        return 1
+
+
 def configure(args: argparse.Namespace) -> int:
     """Configure PMS settings.
 
@@ -324,6 +363,12 @@ def main(args: Optional[List[str]] = None) -> int:
     config_parser.add_argument("key", nargs="?", help="Configuration key")
     config_parser.add_argument("value", nargs="?", help="Configuration value (for 'set' action)")
     config_parser.set_defaults(func=configure)
+
+    # Remove command
+    remove_parser = subparsers.add_parser("remove", help="Remove a project")
+    remove_parser.add_argument("project_id", help="Project ID")
+    remove_parser.add_argument("--force", action="store_true", help="Remove without confirmation prompt")
+    remove_parser.set_defaults(func=remove)
 
     # Parse arguments
     parsed_args = parser.parse_args(args)

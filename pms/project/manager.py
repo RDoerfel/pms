@@ -304,3 +304,41 @@ class ProjectManager:
             # Save the queries file
             with open(queries_path, "w") as f:
                 json.dump(queries, f, indent=2)
+
+    def remove_project(self, project_id: str) -> bool:
+        """Remove a project and all its associated data.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            True if project was successfully removed, False otherwise
+        """
+        # Check if project exists
+        project = self.db.get_project(project_id)
+        if not project:
+            logger.warning(f"Project not found: {project_id}")
+            return False
+
+        try:
+            # Get the project directory path
+            project_dir = self.storage.get_project_path(project_id)
+
+            # Remove project from database first
+            # This will cascade delete entries in project_articles table due to foreign key constraints
+            cursor = self.db.conn.cursor()
+            cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+            self.db.conn.commit()
+
+            # Remove project files (if they exist)
+            import shutil
+
+            if os.path.exists(project_dir):
+                shutil.rmtree(project_dir)
+
+            logger.info(f"Removed project {project_id}: {project[1]}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to remove project {project_id}: {str(e)}")
+            self.db.conn.rollback()
+            return False

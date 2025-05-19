@@ -100,6 +100,9 @@ pms export abc123 output.jsonl
 # Export in different formats
 pms export abc123 output.json --format json
 pms export abc123 output.csv --format csv
+
+# Remove a project
+pms remove abc123
 ```
 
 ## Query Examples
