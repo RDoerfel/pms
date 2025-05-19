@@ -1,5 +1,7 @@
 """Project management functionality."""
 
+import json
+import os
 import logging
 import uuid
 from typing import List, Dict, Any, Optional, Tuple
@@ -52,6 +54,10 @@ class ProjectManager:
             raise ValueError(f"Failed to create project: {name}")
 
         logger.info(f"Created project {project_id}: {name}")
+
+        # Initialize the project config file
+        self.update_project_config(project_id=project_id, mesh_terms=[], date_range={"start": "", "end": ""})
+
         return project_id
 
     def get_project(self, project_id: str) -> Optional[Tuple[str, str, str]]:
@@ -72,6 +78,28 @@ class ProjectManager:
             List of (id, name, description) tuples
         """
         return self.db.list_projects()
+
+    def get_project_config(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """Get project configuration.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Project configuration dictionary or None if not found
+        """
+        project = self.get_project(project_id)
+        if not project:
+            return None
+
+        project_dir = self.storage.get_project_path(project_id)
+        config_path = os.path.join(project_dir, "config.json")
+
+        if not os.path.exists(config_path):
+            return None
+
+        with open(config_path, "r") as f:
+            return json.load(f)
 
     def search_and_store(
         self,
@@ -154,6 +182,28 @@ class ProjectManager:
             f"Search results: found={results['found']}, new={results['new']}, "
             f"fetched={results['fetched']}, stored={results['stored']}"
         )
+        # Extract MeSH terms from the query (simplified approach)
+
+        mesh_terms = []
+        if "[MeSH]" in query:
+            import re
+
+            mesh_pattern = r'"([^"]+)"\[MeSH\]'
+            mesh_terms = re.findall(mesh_pattern, query)
+
+        # Prepare date range in the format for config
+        config_date_range = None
+        if date_range:
+            config_date_range = {"start": date_range[0], "end": date_range[1]}
+
+        # After search is complete, update the project config
+        self.update_project_config(
+            project_id=project_id,
+            mesh_terms=mesh_terms if mesh_terms else None,
+            date_range=config_date_range,
+            query=query,
+        )
+
         return results
 
     def get_articles(self, project_id: str) -> List[Article]:
@@ -182,3 +232,76 @@ class ProjectManager:
             Number of articles
         """
         return self.db.count_project_articles(project_id)
+
+    def update_project_config(
+        self,
+        project_id: str,
+        date_range: Optional[Dict[str, str]] = None,
+        query: Optional[str] = None,
+    ) -> None:
+        """Update or create the project configuration file.
+
+        Args:
+            project_id: Project ID
+            date_range: Dict with 'start' and 'end' date strings
+            query: The latest query string
+        """
+        project = self.get_project(project_id)
+        if not project:
+            raise ValueError(f"Project not found: {project_id}")
+
+        # Get the project directory path
+        project_dir = self.storage.get_project_path(project_id)
+        config_path = os.path.join(project_dir, "config.json")
+
+        # Initialize default config or load existing
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                project_config = json.load(f)
+        else:
+            project_config = {
+                "project_name": project[1],
+                "description": project[2] or "",
+                "created_at": datetime.now().isoformat(),
+                "date_range": {"start": "", "end": ""},
+                "last_run": "",
+                "article_count": 0,
+            }
+
+        # Update config with new values
+        now = datetime.now().isoformat()
+        project_config["last_run"] = now
+
+        if date_range is not None:
+            project_config["date_range"] = date_range
+
+        # Update article count
+        article_count = self.get_article_count(project_id)
+        project_config["article_count"] = article_count
+
+        # Save the config file
+        with open(config_path, "w") as f:
+            json.dump(project_config, f, indent=2)
+
+        # If a query was provided, update or create the queries.json file
+        if query is not None:
+            queries_path = os.path.join(project_dir, "queries.json")
+
+            if os.path.exists(queries_path):
+                with open(queries_path, "r") as f:
+                    queries = json.load(f)
+            else:
+                queries = []
+
+            # Add the new query entry
+            query_entry = {
+                "query": query,
+                "date_range": date_range,
+                "timestamp": now,
+                "results_count": article_count - sum(q.get("new_articles", 0) for q in queries),
+            }
+            queries.append(query_entry)
+
+            # Save the queries file
+            with open(queries_path, "w") as f:
+                json.dump(queries, f, indent=2)
