@@ -155,7 +155,8 @@ class Database:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "SELECT id, name, description FROM projects WHERE id = ?", (project_id,)
+                "SELECT id, name, description FROM projects WHERE id = ?",
+                (project_id,),
             )
             result = cursor.fetchone()
             return result if result else None
@@ -223,7 +224,9 @@ class Database:
             self.conn.commit()
             return True
         except sqlite3.Error as e:
-            logger.error(f"Error linking article {pmid} to project {project_id}: {e}")
+            logger.error(
+                f"Error linking article {pmid} to project {project_id}: {e}"
+            )
             self.conn.rollback()
             return False
 
@@ -239,11 +242,14 @@ class Database:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "SELECT pmid FROM project_articles WHERE project_id = ?", (project_id,)
+                "SELECT pmid FROM project_articles WHERE project_id = ?",
+                (project_id,),
             )
             return [row[0] for row in cursor.fetchall()]
         except sqlite3.Error as e:
-            logger.error(f"Error retrieving articles for project {project_id}: {e}")
+            logger.error(
+                f"Error retrieving articles for project {project_id}: {e}"
+            )
             return []
 
     def filter_new_pmids(self, project_id: str, pmids: List[str]) -> List[str]:
@@ -273,7 +279,9 @@ class Database:
             # Return only new PMIDs
             return [pmid for pmid in pmids if pmid not in existing_pmids]
         except sqlite3.Error as e:
-            logger.error(f"Error filtering PMIDs for project {project_id}: {e}")
+            logger.error(
+                f"Error filtering PMIDs for project {project_id}: {e}"
+            )
             return []
 
     def count_project_articles(self, project_id: str) -> int:
@@ -293,5 +301,7 @@ class Database:
             )
             return cursor.fetchone()[0]
         except sqlite3.Error as e:
-            logger.error(f"Error counting articles for project {project_id}: {e}")
+            logger.error(
+                f"Error counting articles for project {project_id}: {e}"
+            )
             return 0

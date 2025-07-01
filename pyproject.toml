@@ -26,7 +26,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-line-length = 88
+line-length = 79
 target-version = ["py313"]
 [tool.mypy]
 python_version = "3.13"

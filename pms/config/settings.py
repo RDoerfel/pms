@@ -52,10 +52,14 @@ class Config:
                     user_config = json.load(f)
                     self._update_nested_dict(self.config, user_config)
             except Exception as e:
-                logging.warning(f"Failed to load config from {self.config_path}: {e}")
+                logging.warning(
+                    f"Failed to load config from {self.config_path}: {e}"
+                )
                 logging.warning("Using default configuration")
 
-    def _update_nested_dict(self, d: Dict[str, Any], u: Dict[str, Any]) -> None:
+    def _update_nested_dict(
+        self, d: Dict[str, Any], u: Dict[str, Any]
+    ) -> None:
         """Update a nested dictionary with another dictionary.
 
         Args:

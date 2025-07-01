@@ -22,7 +22,9 @@ class JSONLStorage:
             base_dir: Base directory for storage. If None, uses the path from config.
         """
         self.base_dir = os.path.expanduser(
-            base_dir or config.get("storage", "data_dir") or "~/.local/share/pms/data"
+            base_dir
+            or config.get("storage", "data_dir")
+            or "~/.local/share/pms/data"
         )
 
         # Ensure the directory exists
@@ -59,7 +61,9 @@ class JSONLStorage:
                 json.dump(article.to_dict(), f)
                 f.write("\n")
 
-            logger.debug(f"Stored article {article.pmid} in project {project_id}")
+            logger.debug(
+                f"Stored article {article.pmid} in project {project_id}"
+            )
             return True
         except Exception as e:
             logger.error(
@@ -94,7 +98,9 @@ class JSONLStorage:
             logger.info(f"Stored {count} articles in project {project_id}")
             return count
         except Exception as e:
-            logger.error(f"Error storing articles in project {project_id}: {e}")
+            logger.error(
+                f"Error storing articles in project {project_id}: {e}"
+            )
             return 0
 
     def get_article(self, project_id: str, pmid: str) -> Optional[Article]:
@@ -155,5 +161,7 @@ class JSONLStorage:
 
             return articles
         except Exception as e:
-            logger.error(f"Error retrieving articles from project {project_id}: {e}")
+            logger.error(
+                f"Error retrieving articles from project {project_id}: {e}"
+            )
             return []

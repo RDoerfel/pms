@@ -63,7 +63,9 @@ class PubMedClient:
             params["api_key"] = self.api_key
 
         # Build the URL
-        url = f"{self.BASE_URL}/{endpoint}.fcgi?{urllib.parse.urlencode(params)}"
+        url = (
+            f"{self.BASE_URL}/{endpoint}.fcgi?{urllib.parse.urlencode(params)}"
+        )
         return url
 
     def _make_request(self, url: str) -> Optional[str]:
@@ -88,7 +90,9 @@ class PubMedClient:
             except urllib.error.HTTPError as e:
                 if e.code == 429:  # Too Many Requests
                     wait_time = self.retry_delay * (2**retries)
-                    logger.warning(f"Rate limit exceeded, waiting {wait_time}s")
+                    logger.warning(
+                        f"Rate limit exceeded, waiting {wait_time}s"
+                    )
                     time.sleep(wait_time)
                     retries += 1
                 else:
@@ -157,7 +161,9 @@ class PubMedClient:
             logger.error(f"Error parsing search results: {str(e)}")
             return []
 
-    def fetch_articles(self, pmids: List[str], batch_size: int = 100) -> List[Article]:
+    def fetch_articles(
+        self, pmids: List[str], batch_size: int = 100
+    ) -> List[Article]:
         """Fetch articles by their PMIDs.
 
         Args:
@@ -255,7 +261,9 @@ class PubMedClient:
                 )
 
                 # Handle multiple abstract sections
-                abstract_sections = article_elem.findall(".//Abstract/AbstractText")
+                abstract_sections = article_elem.findall(
+                    ".//Abstract/AbstractText"
+                )
                 if len(abstract_sections) > 1:
                     abstract_parts = []
                     for section in abstract_sections:
@@ -279,7 +287,9 @@ class PubMedClient:
                         if last_name_elem is not None and last_name_elem.text:
                             # Extract affiliations
                             affiliations = []
-                            for affiliation in author_elem.findall(".//Affiliation"):
+                            for affiliation in author_elem.findall(
+                                ".//Affiliation"
+                            ):
                                 if affiliation.text:
                                     affiliations.append(affiliation.text)
 
@@ -318,7 +328,9 @@ class PubMedClient:
                         else "1"
                     )
                     day = (
-                        day_elem.text if day_elem is not None and day_elem.text else "1"
+                        day_elem.text
+                        if day_elem is not None and day_elem.text
+                        else "1"
                     )
 
                     if year:
@@ -332,7 +344,9 @@ class PubMedClient:
 
                         try:
                             pub_date_str = f"{year}-{month}-{day}"
-                            pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
+                            pub_date = datetime.strptime(
+                                pub_date_str, "%Y-%m-%d"
+                            )
                         except ValueError:
                             logger.warning(
                                 f"Invalid publication date for article {pmid}: {year}-{month}-{day}"

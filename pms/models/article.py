@@ -54,7 +54,9 @@ class Article:
             "authors": [author.to_dict() for author in self.authors],
             "keywords": self.keywords,
             "publication_date": (
-                self.publication_date.isoformat() if self.publication_date else None
+                self.publication_date.isoformat()
+                if self.publication_date
+                else None
             ),
             "doi": self.doi,
             "journal": self.journal,

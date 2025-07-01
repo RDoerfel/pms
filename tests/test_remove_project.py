@@ -51,7 +51,9 @@ class TestProjectRemoval:
         # Create a project directly in the database
         project_id = "test-direct-db"
         project_name = "Test Direct DB"
-        result = self.db.create_project(project_id, project_name, "Test description")
+        result = self.db.create_project(
+            project_id, project_name, "Test description"
+        )
         assert result is True, "Failed to create project directly in database"
 
         # Verify project exists
@@ -108,7 +110,9 @@ class TestProjectRemoval:
 
         # Verify project no longer exists in database
         project = self.db.get_project(project_id)
-        assert project is None, "Project still exists in database after removal"
+        assert (
+            project is None
+        ), "Project still exists in database after removal"
 
         # Verify project directory was removed
         assert not os.path.exists(
@@ -132,7 +136,9 @@ class TestProjectRemoval:
         # Try to remove a non-existent project
         non_existent_id = "non-existent-id"
         success = manager.remove_project(non_existent_id)
-        assert success is False, "Removing non-existent project should return False"
+        assert (
+            success is False
+        ), "Removing non-existent project should return False"
 
         # Clean up
         manager.close()

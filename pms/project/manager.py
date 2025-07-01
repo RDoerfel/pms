@@ -180,7 +180,9 @@ class ProjectManager:
             if articles:
                 # Add articles to database tracking
                 for article in articles:
-                    self.db.add_article(article.pmid, article.doi, article.title)
+                    self.db.add_article(
+                        article.pmid, article.doi, article.title
+                    )
                     self.db.link_article_to_project(project_id, article.pmid)
 
                 # Store articles in JSONL
