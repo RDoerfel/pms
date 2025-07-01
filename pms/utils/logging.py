@@ -15,8 +15,13 @@ def setup_logging(log_level: Optional[str] = None) -> None:
         log_level: Log level to use. If None, uses the level from config.
     """
     level = log_level or config.get("logging", "level") or "INFO"
-    log_format = config.get("logging", "format") or "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    log_file = os.path.expanduser(config.get("logging", "file") or "~/.local/share/pms/pms.log")
+    log_format = (
+        config.get("logging", "format")
+        or "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    log_file = os.path.expanduser(
+        config.get("logging", "file") or "~/.local/share/pms/pms.log"
+    )
 
     # Ensure log directory exists
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)

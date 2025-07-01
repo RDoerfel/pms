@@ -35,7 +35,12 @@ class ProjectManager:
         """Context manager exit."""
         self.close()
 
-    def create_project(self, name: str, description: Optional[str] = None, project_id: Optional[str] = None) -> str:
+    def create_project(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        project_id: Optional[str] = None,
+    ) -> str:
         """Create a new project.
 
         Args:
@@ -56,7 +61,9 @@ class ProjectManager:
         logger.info(f"Created project {project_id}: {name}")
 
         # Initialize the project config file
-        self.update_project_config(project_id=project_id, date_range={"start": "", "end": ""})
+        self.update_project_config(
+            project_id=project_id, date_range={"start": "", "end": ""}
+        )
 
         return project_id
 
@@ -161,7 +168,9 @@ class ProjectManager:
 
         for i in range(0, len(new_pmids), batch_size):
             batch_pmids = new_pmids[i : i + batch_size]
-            logger.info(f"Fetching batch {i//batch_size + 1}/{(len(new_pmids) + batch_size - 1)//batch_size}")
+            logger.info(
+                f"Fetching batch {i//batch_size + 1}/{(len(new_pmids) + batch_size - 1)//batch_size}"
+            )
 
             # Fetch articles
             articles = self.client.fetch_articles(batch_pmids)
@@ -297,7 +306,8 @@ class ProjectManager:
                 "query": query,
                 "date_range": date_range,
                 "timestamp": now,
-                "results_count": article_count - sum(q.get("new_articles", 0) for q in queries),
+                "results_count": article_count
+                - sum(q.get("new_articles", 0) for q in queries),
             }
             queries.append(query_entry)
 

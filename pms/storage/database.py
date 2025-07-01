@@ -22,7 +22,9 @@ class Database:
             db_path: Path to the database file. If None, uses the path from config.
         """
         self.db_path = os.path.expanduser(
-            db_path or config.get("storage", "database_path") or "~/.local/share/pms/pms.db"
+            db_path
+            or config.get("storage", "database_path")
+            or "~/.local/share/pms/pms.db"
         )
 
         # Ensure the directory exists
@@ -114,7 +116,9 @@ class Database:
         """Context manager exit."""
         self.close()
 
-    def create_project(self, project_id: str, name: str, description: Optional[str] = None) -> bool:
+    def create_project(
+        self, project_id: str, name: str, description: Optional[str] = None
+    ) -> bool:
         """Create a new project.
 
         Args:
@@ -128,7 +132,8 @@ class Database:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO projects (id, name, description) VALUES (?, ?, ?)", (project_id, name, description)
+                "INSERT INTO projects (id, name, description) VALUES (?, ?, ?)",
+                (project_id, name, description),
             )
             self.conn.commit()
             logger.info(f"Created project: {project_id} - {name}")
@@ -149,7 +154,9 @@ class Database:
         """
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT id, name, description FROM projects WHERE id = ?", (project_id,))
+            cursor.execute(
+                "SELECT id, name, description FROM projects WHERE id = ?", (project_id,)
+            )
             result = cursor.fetchone()
             return result if result else None
         except sqlite3.Error as e:
@@ -170,7 +177,9 @@ class Database:
             logger.error(f"Error listing projects: {e}")
             return []
 
-    def add_article(self, pmid: str, doi: Optional[str] = None, title: Optional[str] = None) -> bool:
+    def add_article(
+        self, pmid: str, doi: Optional[str] = None, title: Optional[str] = None
+    ) -> bool:
         """Add an article to the database.
 
         Args:
@@ -183,7 +192,10 @@ class Database:
         """
         try:
             cursor = self.conn.cursor()
-            cursor.execute("INSERT OR REPLACE INTO articles (pmid, doi, title) VALUES (?, ?, ?)", (pmid, doi, title))
+            cursor.execute(
+                "INSERT OR REPLACE INTO articles (pmid, doi, title) VALUES (?, ?, ?)",
+                (pmid, doi, title),
+            )
             self.conn.commit()
             logger.debug(f"Added article: {pmid}")
             return True
@@ -205,7 +217,8 @@ class Database:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT OR IGNORE INTO project_articles (project_id, pmid) VALUES (?, ?)", (project_id, pmid)
+                "INSERT OR IGNORE INTO project_articles (project_id, pmid) VALUES (?, ?)",
+                (project_id, pmid),
             )
             self.conn.commit()
             return True
@@ -225,7 +238,9 @@ class Database:
         """
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT pmid FROM project_articles WHERE project_id = ?", (project_id,))
+            cursor.execute(
+                "SELECT pmid FROM project_articles WHERE project_id = ?", (project_id,)
+            )
             return [row[0] for row in cursor.fetchall()]
         except sqlite3.Error as e:
             logger.error(f"Error retrieving articles for project {project_id}: {e}")
@@ -272,7 +287,10 @@ class Database:
         """
         try:
             cursor = self.conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM project_articles WHERE project_id = ?", (project_id,))
+            cursor.execute(
+                "SELECT COUNT(*) FROM project_articles WHERE project_id = ?",
+                (project_id,),
+            )
             return cursor.fetchone()[0]
         except sqlite3.Error as e:
             logger.error(f"Error counting articles for project {project_id}: {e}")

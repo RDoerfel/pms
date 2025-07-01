@@ -29,7 +29,9 @@ def create_project(args: argparse.Namespace) -> int:
 
     try:
         with ProjectManager() as manager:
-            project_id = manager.create_project(args.name, args.description, args.project_id)
+            project_id = manager.create_project(
+                args.name, args.description, args.project_id
+            )
             print(f"Created project '{args.name}' with ID: {project_id}")
         return 0
     except Exception as e:
@@ -173,10 +175,14 @@ def export(args: argparse.Namespace) -> int:
 
             articles = manager.get_articles(args.project_id)
             if not articles:
-                print(f"No articles found in project '{project[1]}' ({args.project_id})")
+                print(
+                    f"No articles found in project '{project[1]}' ({args.project_id})"
+                )
                 return 0
 
-            print(f"Exporting {len(articles)} articles from project '{project[1]}' ({args.project_id})")
+            print(
+                f"Exporting {len(articles)} articles from project '{project[1]}' ({args.project_id})"
+            )
 
             # Export to file
             with open(args.output, "w") as f:
@@ -195,7 +201,16 @@ def export(args: argparse.Namespace) -> int:
                     writer = csv.writer(f)
                     # Write header
                     writer.writerow(
-                        ["pmid", "title", "abstract", "doi", "publication_date", "journal", "authors", "keywords"]
+                        [
+                            "pmid",
+                            "title",
+                            "abstract",
+                            "doi",
+                            "publication_date",
+                            "journal",
+                            "authors",
+                            "keywords",
+                        ]
                     )
                     # Write data
                     for article in articles:
@@ -205,9 +220,18 @@ def export(args: argparse.Namespace) -> int:
                                 article.title,
                                 article.abstract,
                                 article.doi or "",
-                                article.publication_date.isoformat() if article.publication_date else "",
+                                (
+                                    article.publication_date.isoformat()
+                                    if article.publication_date
+                                    else ""
+                                ),
                                 article.journal or "",
-                                "; ".join([f"{a.last_name}, {a.fore_name or ''}" for a in article.authors]),
+                                "; ".join(
+                                    [
+                                        f"{a.last_name}, {a.fore_name or ''}"
+                                        for a in article.authors
+                                    ]
+                                ),
                                 "; ".join(article.keywords),
                             ]
                         )
@@ -234,7 +258,9 @@ def remove(args: argparse.Namespace) -> int:
         if not args.force:
             # Ask for confirmation
             project_id = args.project_id
-            confirm = input(f"Are you sure you want to remove project {project_id}? This cannot be undone. (y/N): ")
+            confirm = input(
+                f"Are you sure you want to remove project {project_id}? This cannot be undone. (y/N): "
+            )
             if confirm.lower() != "y":
                 print("Operation cancelled.")
                 return 0
@@ -326,16 +352,26 @@ def main(args: Optional[List[str]] = None) -> int:
     list_parser.set_defaults(func=list_projects)
 
     # Search command
-    search_parser = subparsers.add_parser("search", help="Search PubMed and store articles")
+    search_parser = subparsers.add_parser(
+        "search", help="Search PubMed and store articles"
+    )
     search_parser.add_argument("project_id", help="Project ID")
     search_parser.add_argument("query", help="PubMed search query")
-    search_parser.add_argument("--max-results", type=int, default=100, help="Maximum number of results (default: 100)")
+    search_parser.add_argument(
+        "--max-results",
+        type=int,
+        default=100,
+        help="Maximum number of results (default: 100)",
+    )
     search_parser.add_argument(
         "--date-range",
         help="Date range in format 'YYYY/MM/DD:YYYY/MM/DD'",
     )
     search_parser.add_argument(
-        "--batch-size", type=int, default=100, help="Batch size for fetching articles (default: 100)"
+        "--batch-size",
+        type=int,
+        default=100,
+        help="Batch size for fetching articles (default: 100)",
     )
     search_parser.set_defaults(func=search)
 
@@ -345,7 +381,9 @@ def main(args: Optional[List[str]] = None) -> int:
     count_parser.set_defaults(func=count)
 
     # Export command
-    export_parser = subparsers.add_parser("export", help="Export articles from a project")
+    export_parser = subparsers.add_parser(
+        "export", help="Export articles from a project"
+    )
     export_parser.add_argument("project_id", help="Project ID")
     export_parser.add_argument("output", help="Output file path")
     export_parser.add_argument(
@@ -358,16 +396,24 @@ def main(args: Optional[List[str]] = None) -> int:
 
     # Configure command
     config_parser = subparsers.add_parser("config", help="Configure PMS settings")
-    config_parser.add_argument("action", choices=["get", "set", "list"], help="Configuration action")
-    config_parser.add_argument("section", nargs="?", help="Configuration section (e.g., 'api', 'storage')")
+    config_parser.add_argument(
+        "action", choices=["get", "set", "list"], help="Configuration action"
+    )
+    config_parser.add_argument(
+        "section", nargs="?", help="Configuration section (e.g., 'api', 'storage')"
+    )
     config_parser.add_argument("key", nargs="?", help="Configuration key")
-    config_parser.add_argument("value", nargs="?", help="Configuration value (for 'set' action)")
+    config_parser.add_argument(
+        "value", nargs="?", help="Configuration value (for 'set' action)"
+    )
     config_parser.set_defaults(func=configure)
 
     # Remove command
     remove_parser = subparsers.add_parser("remove", help="Remove a project")
     remove_parser.add_argument("project_id", help="Project ID")
-    remove_parser.add_argument("--force", action="store_true", help="Remove without confirmation prompt")
+    remove_parser.add_argument(
+        "--force", action="store_true", help="Remove without confirmation prompt"
+    )
     remove_parser.set_defaults(func=remove)
 
     # Parse arguments

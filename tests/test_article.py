@@ -9,7 +9,12 @@ from pms.models import Article, Author
 def test_article_creation():
     """Test that articles can be created correctly."""
     # Create an author
-    author = Author(last_name="Smith", fore_name="John", initials="J", affiliations=["University of Example"])
+    author = Author(
+        last_name="Smith",
+        fore_name="John",
+        initials="J",
+        affiliations=["University of Example"],
+    )
 
     # Create an article
     article = Article(
@@ -42,7 +47,14 @@ def test_article_to_from_dict():
         pmid="12345",
         title="Test Article",
         abstract="This is a test abstract.",
-        authors=[Author(last_name="Smith", fore_name="John", initials="J", affiliations=["University of Example"])],
+        authors=[
+            Author(
+                last_name="Smith",
+                fore_name="John",
+                initials="J",
+                affiliations=["University of Example"],
+            )
+        ],
         keywords=["test", "example"],
         publication_date=datetime(2020, 1, 1),
         doi="10.1234/test",

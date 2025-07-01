@@ -38,7 +38,9 @@ class Config:
             config_path: Path to the configuration file. If None, uses the default
                          location (~/.config/pms/config.json).
         """
-        self.config_path = Path(config_path or os.path.expanduser("~/.config/pms/config.json"))
+        self.config_path = Path(
+            config_path or os.path.expanduser("~/.config/pms/config.json")
+        )
         self.config = DEFAULT_CONFIG.copy()
         self._load_config()
 

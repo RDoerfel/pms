@@ -111,7 +111,9 @@ class TestProjectRemoval:
         assert project is None, "Project still exists in database after removal"
 
         # Verify project directory was removed
-        assert not os.path.exists(project_dir), "Project directory still exists after removal"
+        assert not os.path.exists(
+            project_dir
+        ), "Project directory still exists after removal"
 
         # Clean up
         manager.close()

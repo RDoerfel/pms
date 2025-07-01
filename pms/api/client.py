@@ -101,7 +101,11 @@ class PubMedClient:
         return None
 
     def search(
-        self, query: str, max_results: int = 100, date_range: Optional[Tuple[str, str]] = None, retmode: str = "json"
+        self,
+        query: str,
+        max_results: int = 100,
+        date_range: Optional[Tuple[str, str]] = None,
+        retmode: str = "json",
     ) -> List[str]:
         """Search PubMed for articles matching the query.
 
@@ -173,7 +177,9 @@ class PubMedClient:
             batch_articles = self._fetch_batch(batch_pmids)
             articles.extend(batch_articles)
 
-            logger.info(f"Fetched {len(batch_articles)} articles (batch {i//batch_size + 1})")
+            logger.info(
+                f"Fetched {len(batch_articles)} articles (batch {i//batch_size + 1})"
+            )
 
         return articles
 
@@ -234,11 +240,19 @@ class PubMedClient:
 
                 # Extract title
                 title_elem = article_elem.find("ArticleTitle")
-                title = title_elem.text if title_elem is not None and title_elem.text else ""
+                title = (
+                    title_elem.text
+                    if title_elem is not None and title_elem.text
+                    else ""
+                )
 
                 # Extract abstract
                 abstract_elem = article_elem.find(".//AbstractText")
-                abstract = abstract_elem.text if abstract_elem is not None and abstract_elem.text else ""
+                abstract = (
+                    abstract_elem.text
+                    if abstract_elem is not None and abstract_elem.text
+                    else ""
+                )
 
                 # Handle multiple abstract sections
                 abstract_sections = article_elem.findall(".//Abstract/AbstractText")
@@ -271,8 +285,16 @@ class PubMedClient:
 
                             author = Author(
                                 last_name=last_name_elem.text,
-                                fore_name=fore_name_elem.text if fore_name_elem is not None else None,
-                                initials=initials_elem.text if initials_elem is not None else None,
+                                fore_name=(
+                                    fore_name_elem.text
+                                    if fore_name_elem is not None
+                                    else None
+                                ),
+                                initials=(
+                                    initials_elem.text
+                                    if initials_elem is not None
+                                    else None
+                                ),
                                 affiliations=affiliations,
                             )
                             authors.append(author)
@@ -285,9 +307,19 @@ class PubMedClient:
                     month_elem = pub_date_elem.find("Month")
                     day_elem = pub_date_elem.find("Day")
 
-                    year = year_elem.text if year_elem is not None and year_elem.text else None
-                    month = month_elem.text if month_elem is not None and month_elem.text else "1"
-                    day = day_elem.text if day_elem is not None and day_elem.text else "1"
+                    year = (
+                        year_elem.text
+                        if year_elem is not None and year_elem.text
+                        else None
+                    )
+                    month = (
+                        month_elem.text
+                        if month_elem is not None and month_elem.text
+                        else "1"
+                    )
+                    day = (
+                        day_elem.text if day_elem is not None and day_elem.text else "1"
+                    )
 
                     if year:
                         # Convert month name to number if needed
@@ -302,7 +334,9 @@ class PubMedClient:
                             pub_date_str = f"{year}-{month}-{day}"
                             pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
                         except ValueError:
-                            logger.warning(f"Invalid publication date for article {pmid}: {year}-{month}-{day}")
+                            logger.warning(
+                                f"Invalid publication date for article {pmid}: {year}-{month}-{day}"
+                            )
 
                 # Extract DOI
                 doi = None
